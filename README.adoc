@@ -226,3 +226,27 @@ In this case you'll get:
 ----
 window.myClient= ...;
 ----
+
+You can also change the base using:
+
+
+[source, javascript, numbered]
+----
+myClient.base= '/foo';
+----
+
+headers:
+
+
+[source, javascript, numbered]
+----
+myClient.headers= { 'Authorization': 'Basic: ccccc' };
+----
+
+and `$.ajax` settings:
+
+
+[source, javascript, numbered]
+----
+myClient.settings= {};
+----
