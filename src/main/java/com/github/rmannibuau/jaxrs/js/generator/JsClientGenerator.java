@@ -43,9 +43,9 @@ public class JsClientGenerator {
         builder.append("var params={};");
         builder.append("params.url=base+url+(matrix?(';'+matrix):'')+(query?('?'+query):'');");
         builder.append("params.type=method;");
-        builder.append("if (this.data){params.data=this.data};");
-        builder.append("if(this.headers){params.headers=$.extend({}, headers, this.headers)};");
-        builder.append("if(settings){params.settings=settings;};");
+        builder.append("if (this.data){params.data=this.data}");
+        builder.append("if(this.headers){params.headers=$.extend({}, headers, this.headers)}");
+        builder.append("if(settings){params.settings=settings;}");
         builder.append("return $.ajax(params);");
         builder.append("}};};");
 

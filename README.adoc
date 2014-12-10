@@ -1,0 +1,228 @@
+== Goal
+
+Adding a simple CXF in interceptor you can hit CXF to generate a javascript client.
+
+NOTE: this will rely on jquery so you need to have it setup as well.
+
+== Setup
+=== TomEE >= 1.7.2
+
+Nothing to do :).
+
+=== Other
+
+add `com.github.rmannibuau.jaxrs.js.handler.JsInterceptor` as an in interceptor in CXF (bus or server).
+
+== Samples
+
+For the following application:
+
+[source, java, numbered]
+----
+@ApplicationPath("api")
+public class App extends Application {}
+
+@Path("the-resource")
+public class AResource {
+    @GET
+    @Path("{p}/{p2}")
+    public String aGet(@HeaderParam("h") String h,@HeaderParam("h2") String h2,
+                       @PathParam("p") String p,@PathParam("p2") String p2,
+                       @QueryParam("q") String q,@QueryParam("q2") String q2,
+                       @MatrixParam("m") String m,@MatrixParam("m2") String m2) {
+        return h + h2 + p + p2 + q + q2 + m + m2;
+    }
+
+    @HEAD
+    public void aHead(@HeaderParam("h") String h) {
+        // no-op
+    }
+
+    @DELETE
+    public void aDelete(@HeaderParam("h") String h) {
+        // no-op
+    }
+
+    @POST
+    public String aPost(@HeaderParam("h") String h, final String body) {
+        return null;
+    }
+
+    @PUT
+    public String aPut(@HeaderParam("h") String h, final String body) {
+        return null;
+    }
+}
+
+@Path("simple-resource")
+public class SimpleResource {
+    @GET
+    public String aGet() {
+        return "get";
+    }
+}
+----
+
+You'll be able to hit:
+
+----
+api?jsclient
+----
+
+It means the following html page loads this client:
+
+[source,html,numbered]
+----
+<html>
+    <head>
+        <script src="jquery.js"></script>
+        <script src="api?jsclient"></script>
+        </head>
+        <body>
+        <div id="content"></div>
+        <script>
+            $(function () {
+                jsclient.AResource.aGet('header1', 'header2', 'path 1', 'path2', 'query1', 'query2', 'matrix1', 'matrix 2')
+                    .done(function (d) {
+                        $('#content').html(d);
+                    });
+            });
+    </script>
+  </body>
+</html>
+----
+
+And you'll get
+
+[source,javascript,numbered]
+----
+var jsclient = (function (_client, u) {
+    var Client = function (base, headers, settings) {
+        var headerCopy = $.extend({}, headers);
+        return {
+            data: u, headers: headerCopy, request: function (method, url, query, matrix) {
+                var params = {};
+                params.url = base + url + (matrix ? (';' + matrix) : '') + (query ? ('?' + query) : '');
+                params.type = method;
+                if (this.data) {
+                    params.data = this.data
+                }
+                if (this.headers) {
+                    params.headers = $.extend({}, headers, this.headers)
+                }
+                if (settings) {
+                    params.settings = settings;
+                }
+                return $.ajax(params);
+            }
+        };
+    };
+    var appendString = function (str, name, value, defaultValue, sep) {
+        var val = value ? value : defaultValue;
+        return (str && str.length > 0 && val ? (str + sep) : '') + (val ? (name + '=' + encodeURIComponent(val)) : '');
+    };
+    _client.headers = {};
+    _client.settings = u;
+    _client.base = '/openejb/api';
+    _client.SimpleResource = {
+        aGet: function () {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/simple-resource/';
+            var query = u;
+            var matrix = u;
+            return client.request('GET', path, query, matrix);
+        }
+    };
+    _client.AResource = {
+        aDelete: function (h) {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/the-resource/';
+            var query = u;
+            var matrix = u;
+            if (h) {
+                client.headers.h = h;
+            }
+            return client.request('DELETE', path, query, matrix);
+        }, aGet: function (h, h2, p, p2, q, q2, m, m2) {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/the-resource/{p}/{p2}';
+            var query = u;
+            var matrix = u;
+            if (h) {
+                client.headers.h = h;
+            }
+            if (h2) {
+                client.headers.h2 = h2;
+            }
+            path = path.replace('{p}', p);
+            path = path.replace('{p2}', p2);
+            query = appendString(query, 'q', q, u, '&');
+            query = appendString(query, 'q2', q2, u, '&');
+            matrix = appendString(matrix, 'm', m, u, ';');
+            matrix = appendString(matrix, 'm2', m2, u, ';');
+            return client.request('GET', path, query, matrix);
+        }, aHead: function (h) {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/the-resource/';
+            var query = u;
+            var matrix = u;
+            if (h) {
+                client.headers.h = h;
+            }
+            return client.request('HEAD', path, query, matrix);
+        }, aPost: function (h, body) {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/the-resource/';
+            var query = u;
+            var matrix = u;
+            if (h) {
+                client.headers.h = h;
+            }
+            client.data = body;
+            return client.request('POST', path, query, matrix);
+        }, aPut: function (h, body) {
+            var client = new Client(_client.base, _client.headers, _client.settings);
+            var path = '/the-resource/';
+            var query = u;
+            var matrix = u;
+            if (h) {
+                client.headers.h = h;
+            }
+            client.data = body;
+            return client.request('PUT', path, query, matrix);
+        }
+    };
+    return _client;
+})(jsclient || {}, undefined);
+----
+
+A sample usage would be:
+
+[source, javascript, numbered]
+----
+myClient.AResource.aGet('header1', 'header2', 'path 1', 'path2', 'query1', 'query2', 'matrix1', 'matrix 2')
+    .done(function (data) {
+        console.log(data);
+    });
+----
+
+== Configuration
+
+You can change the name of the client setting a value to jsclient:
+
+----
+api?jsclient
+----
+
+And you can set a prefix to the client if you don't want a variable using jsnamespace:
+
+----
+api?jsclient=myClient&jsnamespace=window
+----
+
+In this case you'll get:
+
+[source, javascript, numbered]
+----
+window.myClient= ...;
+----
