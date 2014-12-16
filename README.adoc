@@ -2,7 +2,7 @@
 
 Adding a simple CXF in interceptor you can hit CXF to generate a javascript client.
 
-NOTE: this will rely on jquery so you need to have it setup as well.
+NOTE: this will rely on jquery or angularjs so you need to have one of both setup as well.
 
 == Setup
 === TomEE >= 1.7.2
