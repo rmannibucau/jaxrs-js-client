@@ -391,7 +391,7 @@ You can change the name of the module setting a value to angularjsclient:
 api?angularjsclient=myModule
 ----
 
-NOTE: the client is always called `module name`Client. So with previous snippet you'll get `myModuleClient`.
+NOTE: the client is always called `module name`Client`. So with previous snippet you'll get `myModuleClient`.
 
 NOTE: default name uses the simple name of the JAX-RS application. If none is used then default will be `jaxrsClient`.
 
