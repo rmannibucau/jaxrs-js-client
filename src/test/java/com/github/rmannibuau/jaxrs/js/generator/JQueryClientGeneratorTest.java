@@ -1,21 +1,17 @@
 package com.github.rmannibuau.jaxrs.js.generator;
 
+import com.github.rmannibuau.jaxrs.js.generator.test.PhantomJsRule;
 import org.apache.openejb.jee.WebApp;
 import org.apache.openejb.junit.ApplicationComposerRule;
-import org.apache.openejb.loader.Files;
 import org.apache.openejb.loader.IO;
-import org.apache.openejb.loader.Zips;
 import org.apache.openejb.testing.Classes;
 import org.apache.openejb.testing.EnableServices;
 import org.apache.openejb.testing.Module;
 import org.apache.openejb.testing.RandomPort;
 import org.apache.openejb.testing.SimpleLog;
-import org.apache.ziplock.JarLocation;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.openqa.selenium.phantomjs.PhantomJSDriver;
-import org.openqa.selenium.phantomjs.PhantomJSDriverService;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
 import javax.script.ScriptException;
 import javax.servlet.ServletException;
@@ -35,18 +31,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Locale;
 
 import static org.junit.Assert.assertTrue;
 
 @SimpleLog
 @EnableServices("jaxrs")
-public class JsClientGeneratorTest {
+public class JQueryClientGeneratorTest {
     @Rule
     public final ApplicationComposerRule rule = new ApplicationComposerRule(this);
+
+    @ClassRule
+    public static final PhantomJsRule PHANTOM_JS = new PhantomJsRule();
 
     @RandomPort("httpejbd")
     private URL httpEjbdPort;
@@ -60,30 +57,13 @@ public class JsClientGeneratorTest {
     @Test
     public void js() throws IOException, ScriptException, InterruptedException {
         final String home = httpEjbdPort.toExternalForm() + "openejb/home";
-
-        final File phantomJs = new File("target/phantomjs");
-        Files.mkdirs(phantomJs);
-        Zips.unzip(JarLocation.jarFromPrefix("arquillian-phantom-binary"), phantomJs);
-
-        final DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-        final File exec = new File(phantomJs, "bin/phantomjs" + (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win") ? ".exe" : ""));
-        exec.setExecutable(true);
-        capabilities.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
-                exec.getAbsolutePath());
-        final PhantomJSDriverService service = PhantomJSDriverService.createDefaultService(capabilities);
-        service.start();
-        try {
-            final PhantomJSDriver driver = new PhantomJSDriver(service, capabilities);
-            driver.get(home);
-            assertTrue(driver.getPageSource().contains("header1header2path 1path2query1query2matrix1matrix 2"));
-        } finally {
-            service.stop();
-        }
+        PHANTOM_JS.getDriver().get(home);
+        assertTrue(PHANTOM_JS.getDriver().getPageSource().contains("header1header2path 1path2query1query2matrix1matrix 2"));
     }
 
     @Test
     public void namespace() throws IOException {
-        assertTrue(IO.slurp(new URL(httpEjbdPort.toExternalForm() + "openejb/api?jsclient=myClient&jsnamespace=window")).contains("window.myClient"));
+        assertTrue(IO.slurp(new URL(httpEjbdPort.toExternalForm() + "openejb/api?jqueryclient=myClient&jsnamespace=window")).contains("window.myClient"));
     }
 
     @ApplicationPath("api")
@@ -137,7 +117,7 @@ public class JsClientGeneratorTest {
                     "<html>" +
                     "<head>" +
                             "<script src=\"jquery.js\"></script>" +
-                            "<script src=\"api?jsclient=myClient\"></script>" +
+                            "<script src=\"api?jqueryclient=myClient\"></script>" +
                     "</head>" +
                     "<body>" +
                     "<div id=\"content\"></div>" +

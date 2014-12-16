@@ -1,6 +1,6 @@
 package com.github.rmannibuau.jaxrs.js.handler;
 
-import com.github.rmannibuau.jaxrs.js.generator.JsClientGenerator;
+import com.github.rmannibuau.jaxrs.js.generator.JQueryClientGenerator;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class JsInterceptor extends AbstractPhaseInterceptor<Message> {
-    private final JsClientGenerator delegate = new JsClientGenerator();
+public class JQueryInterceptor extends AbstractPhaseInterceptor<Message> {
+    private final JQueryClientGenerator delegate = new JQueryClientGenerator();
 
     private final ConcurrentMap<Key, String> cache = new ConcurrentHashMap<Key, String>();
     private final String context;
 
-    public JsInterceptor(final String context) {
+    public JQueryInterceptor(final String context) {
         super(Phase.UNMARSHAL);
         addBefore(JAXRSInInterceptor.class.getName());
         this.context = context;
@@ -34,9 +34,9 @@ public class JsInterceptor extends AbstractPhaseInterceptor<Message> {
         final Service service = message.getExchange().get(Service.class);
         final List<ClassResourceInfo> resources = JAXRSServiceImpl.class.cast(service).getClassResourceInfos();
 
-        String jsClient;
         MultivaluedMap<String, String> queryParameters;
-        if ("GET".equals(message.get(Message.HTTP_REQUEST_METHOD)) && (jsClient = (queryParameters = new UriInfoImpl(message, null).getQueryParameters()).getFirst("jsclient")) != null) {
+        if ("GET".equals(message.get(Message.HTTP_REQUEST_METHOD)) && (queryParameters = new UriInfoImpl(message, null).getQueryParameters()).containsKey("jqueryclient")) {
+            final String jsClient = queryParameters.getFirst("jqueryclient");
             final String namespace = queryParameters.getFirst("jsnamespace");
             String generated = cache.get(new Key(service, jsClient, namespace));
             if (generated == null) {

@@ -10,52 +10,23 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * restclient.js is a basic implementation taking a config:
- * var config = {
- *     urlTemplate: yyyy,
- *     parameters: {
- *         ....
- *     },
- *     httpMethod: zzzz
- * }
- *
- * Class is called RestClient and usage is:
- *
- * RestClient.invoke(config);
- * Some builder are also available: withBase, withHeader, withJsonp(jsonp, callback), withTimeout, withSettings.
- *
- * Then this generator is just a matter of generating correct "configs" and default calls:
- * - jsclient.MyResource.myMethod(1, 'foo').success(function (data) { console.log(data); });
- */
-public class JsClientGenerator {
-    public String generate(final String prefix, final String rawName, final List<ClassResourceInfo> cris, final String context) {
-        final boolean hasPrefix = prefix != null && !prefix.isEmpty();
-        final String name = (hasPrefix ? prefix + '.' : "") + (rawName == null || rawName.isEmpty() ? "jsclient" : rawName);
-        final StringBuilder builder = new StringBuilder(!hasPrefix ? "var " : "").append(name).append("=(function(_client,u) {");
+public abstract class BaseClientGenerator {
+    protected abstract void createDelegate(StringBuilder builder);
 
-        builder.append("var Client = function (base,headers,settings) {");
-        builder.append("var headerCopy = $.extend({}, headers);");
-        builder.append("return {");
-        builder.append("data: u,");
-        builder.append("headers: headerCopy,");
-        builder.append("request: function(method, url, query, matrix){");
-        builder.append("var params={};");
-        builder.append("params.url=base+url+(matrix?(';'+matrix):'')+(query?('?'+query):'');");
-        builder.append("params.type=method;");
-        builder.append("if (this.data){params.data=this.data}");
-        builder.append("if(this.headers){params.headers=$.extend({}, headers, this.headers)}");
-        builder.append("if(settings){params.settings=settings;}");
-        builder.append("return $.ajax(params);");
-        builder.append("}};};");
+    protected abstract void createClientHolder(StringBuilder builder);
+
+    protected abstract void generateDelegateClient(StringBuilder builder);
+
+    protected void generate(final StringBuilder builder, final List<ClassResourceInfo> cris, final String context, final String undefined) {
+        generateDelegateClient(builder);
 
         builder.append("var appendString = function(str, name, value, defaultValue, sep){");
         builder.append("var val = value ? value : defaultValue;");
         builder.append("return (str && str.length>0 && val?(str+sep):'')+(val?(name+'='+encodeURIComponent(val)):'');");
         builder.append("};");
 
+        createClientHolder(builder);
         builder.append("_client.headers={};");
-        builder.append("_client.settings=u;");
         builder.append("_client.base='").append(context).append("';");
 
         for (final ClassResourceInfo cri : cris) {
@@ -91,7 +62,7 @@ public class JsClientGenerator {
                         continue; // not yet supported
                     }
 
-                    builder.append(ori.getMethodToInvoke().getName()).append(": function (");
+                    builder.append(ori.getMethodToInvoke().getName()).append(":function (");
 
                     boolean removeLastComma = false;
                     for (final Parameter parameter : ori.getParameters()) {
@@ -113,10 +84,10 @@ public class JsClientGenerator {
                         resourcePath = resourcePath.substring(1, resourcePath.length());
                     }
 
-                    builder.append("var client = new Client(_client.base, _client.headers,_client.settings);");
-                    builder.append("var path = '").append(classPath).append('/').append(resourcePath).append("';");
-                    builder.append("var query = u;");
-                    builder.append("var matrix = u;");
+                    createDelegate(builder);
+                    builder.append("var path='").append(classPath).append('/').append(resourcePath).append("';");
+                    builder.append("var query=").append(undefined).append(";");
+                    builder.append("var matrix=").append(undefined).append(";");
                     for (final Parameter parameter : ori.getParameters()) {
                         final String paramName = paramName(parameter);
                         switch (parameter.getType()) {
@@ -125,7 +96,7 @@ public class JsClientGenerator {
                                 break;
 
                             case QUERY:
-                                builder.append(appendParam("query", parameter, paramName, "&"));
+                                builder.append(appendParam("query", parameter, paramName, "&", undefined));
                                 break;
 
                             case HEADER:
@@ -133,11 +104,11 @@ public class JsClientGenerator {
                                 break;
 
                             case FORM:
-                                builder.append(appendParam("client.data", parameter, paramName, "&"));
+                                builder.append(appendParam("client.data", parameter, paramName, "&", undefined));
                                 break;
 
                             case MATRIX:
-                                builder.append(appendParam("matrix", parameter, paramName, ";"));
+                                builder.append(appendParam("matrix", parameter, paramName, ";", undefined));
                                 break;
 
                             case REQUEST_BODY:
@@ -155,13 +126,11 @@ public class JsClientGenerator {
             builder.append("};");
         }
         builder.append("return _client;");
-        builder.append("})(").append(name).append(" || {}, undefined);");
-        return builder.toString();
     }
 
-    private StringBuilder appendParam(final String var, final Parameter parameter, final String paramName, final String sep) {
+    private StringBuilder appendParam(final String var, final Parameter parameter, final String paramName, final String sep, final String undefined) {
         return new StringBuilder(var).append("=appendString(").append(var).append(",'").append(paramName).append("',")
-                .append(paramName).append(',').append(parameter.getDefaultValue() != null ? '\'' + parameter.getDefaultValue() + '\'': 'u')
+                .append(paramName).append(',').append(parameter.getDefaultValue() != null ? '\'' + parameter.getDefaultValue() + "'": undefined)
                 .append(",'").append(sep).append("');");
     }
 
