@@ -1,6 +1,7 @@
 package com.github.rmannibuau.jaxrs.js.handler;
 
 import com.github.rmannibuau.jaxrs.js.generator.AngularJs1ClientGenerator;
+import com.github.rmannibuau.jaxrs.js.handler.openejb.ApplicationUnwrapper;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
 import org.apache.cxf.jaxrs.impl.UriInfoImpl;
@@ -11,7 +12,6 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.service.Service;
-import org.apache.openejb.server.rest.InternalApplication;
 
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MultivaluedMap;
@@ -44,7 +44,7 @@ public class AngularJSInterceptor extends AbstractPhaseInterceptor<Message> {
                 final ProviderInfo<?> providerInfo = ProviderInfo.class.cast(message.getExchange().getEndpoint().get(Application.class.getName()));
                 jsClient = providerInfo == null ? "jaxrsClient" : providerInfo.getProvider().getClass().getSimpleName();
                 if (providerInfo != null && "InternalApplication".equals(jsClient)) {
-                    final Application original = InternalApplication.class.cast(providerInfo.getProvider()).getOriginal();
+                    final Application original = ApplicationUnwrapper.unwrap(providerInfo.getProvider());
                     if (original != null) {
                         jsClient = original.getClass().getSimpleName();
                     } else {

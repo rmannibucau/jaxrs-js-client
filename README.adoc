@@ -13,7 +13,7 @@ Nothing to do :).
 
 add `com.github.rmannibuau.jaxrs.js.handler.JsInterceptor` as an in interceptor in CXF (bus or server).
 
-== Samples
+== JQuery Samples
 
 For the following application:
 
@@ -77,8 +77,8 @@ It means the following html page loads this client:
     <head>
         <script src="jquery.js"></script>
         <script src="api?jqueryclient"></script>
-        </head>
-        <body>
+    </head>
+    <body>
         <div id="content"></div>
         <script>
             $(function () {
@@ -87,8 +87,8 @@ It means the following html page loads this client:
                         $('#content').html(d);
                     });
             });
-    </script>
-  </body>
+        </script>
+    </body>
 </html>
 ----
 
@@ -249,4 +249,163 @@ and `$.ajax` settings:
 [source, javascript, numbered]
 ----
 myClient.settings= {};
+----
+
+== AngularJs Samples
+
+For the same application as previous one (JQuery section minus SimpleResource resource since it is the same generator):
+
+You'll be able to hit:
+
+----
+api?angularjsclient
+----
+
+It means the following html page loads this client:
+
+[source,html,numbered]
+----
+<html>
+    <head>
+        <script src="jquery.js"></script>
+        <script src="api?angularjsclient"></script>
+    </head>
+    <body>
+        <!-- awesome dom -->
+    </body>
+</html>
+----
+
+And you'll get
+
+[source,javascript,numbered]
+----
+(function () {
+    angular.module('App', []).factory('AppClient', ['$http', function ($http) {
+        var Client = function (base, headers) {
+            var headerCopy = angular.extend({}, headers);
+            return {
+                data: undefined, headers: headerCopy, request: function (method, url, query, matrix) {
+                    var params = {};
+                    params.url = base + url + (matrix ? (';' + matrix) : '') + (query ? ('?' + query) : '');
+                    params.method = method;
+                    if (this.data) {
+                        params.data = this.data
+                    }
+                    if (this.headers) {
+                        params.headers = angular.extend({}, headers, this.headers)
+                    }
+                    return $http(params);
+                }
+            };
+        };
+        var appendString = function (str, name, value, defaultValue, sep) {
+            var val = value ? value : defaultValue;
+            return (str && str.length > 0 && val ? (str + sep) : '') + (val ? (name + '=' + encodeURIComponent(val)) : '');
+        };
+        var _client = {};
+        _client.headers = {};
+        _client.base = '/openejb/api';
+        _client.AResource = {
+            aDelete: function (h) {
+                var client = new Client(_client.base, _client.headers);
+                var path = '/the-resource/';
+                var query = undefined;
+                var matrix = undefined;
+                if (h) {
+                    client.headers.h = h;
+                }
+                return client.request('DELETE', path, query, matrix);
+            }, aGet: function (h, h2, p, p2, q, q2, m, m2) {
+                var client = new Client(_client.base, _client.headers);
+                var path = '/the-resource/{p}/{p2}';
+                var query = undefined;
+                var matrix = undefined;
+                if (h) {
+                    client.headers.h = h;
+                }
+                if (h2) {
+                    client.headers.h2 = h2;
+                }
+                path = path.replace('{p}', p);
+                path = path.replace('{p2}', p2);
+                query = appendString(query, 'q', q, undefined, '&');
+                query = appendString(query, 'q2', q2, undefined, '&');
+                matrix = appendString(matrix, 'm', m, undefined, ';');
+                matrix = appendString(matrix, 'm2', m2, undefined, ';');
+                return client.request('GET', path, query, matrix);
+            }, aHead: function (h) {
+                var client = new Client(_client.base, _client.headers);
+                var path = '/the-resource/';
+                var query = undefined;
+                var matrix = undefined;
+                if (h) {
+                    client.headers.h = h;
+                }
+                return client.request('HEAD', path, query, matrix);
+            }, aPost: function (h, body) {
+                var client = new Client(_client.base, _client.headers);
+                var path = '/the-resource/';
+                var query = undefined;
+                var matrix = undefined;
+                if (h) {
+                    client.headers.h = h;
+                }
+                client.data = body;
+                return client.request('POST', path, query, matrix);
+            }, aPut: function (h, body) {
+                var client = new Client(_client.base, _client.headers);
+                var path = '/the-resource/';
+                var query = undefined;
+                var matrix = undefined;
+                if (h) {
+                    client.headers.h = h;
+                }
+                client.data = body;
+                return client.request('PUT', path, query, matrix);
+            }
+        };
+        return _client;
+    }]);
+})();
+----
+
+A sample usage would be:
+
+[source, javascript, numbered]
+----
+angular.module('myApp', [ 'App' ])
+    .controller('MainController', [ '$scope', 'AppClient', function ($scope, AppClient) {
+        AppClient.AResource.aGet('header1', 'header2', 'path 1', 'path2', 'query1', 'query2', 'matrix1', 'matrix 2')
+           .success(function (data) {
+               $scope.data = data;
+           });
+    }]);
+----
+
+== Configuration
+
+You can change the name of the module setting a value to angularjsclient:
+
+----
+api?angularjsclient=myModule
+----
+
+NOTE: the client is always called `module name`Client. So with previous snippet you'll get `myModuleClient`.
+
+NOTE: default name uses the simple name of the JAX-RS application. If none is used then default will be `jaxrsClient`.
+
+You can also change the base using:
+
+
+[source, javascript, numbered]
+----
+myClient.base= '/foo';
+----
+
+headers:
+
+[source, javascript, numbered]
+----
+myClient.headers= { 'Authorization': 'Basic: ccccc' };
 ----
