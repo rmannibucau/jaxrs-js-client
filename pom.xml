@@ -52,12 +52,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.openejb</groupId>
-      <artifactId>ziplock</artifactId>
-      <version>1.7.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>com.github.rmannibucau</groupId>
       <artifactId>rule-them-all</artifactId>
       <version>0.2</version>
