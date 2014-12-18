@@ -1,6 +1,6 @@
 package com.github.rmannibuau.jaxrs.js.generator;
 
-import com.github.rmannibuau.jaxrs.js.generator.test.PhantomJsRule;
+import com.github.rmannibucau.rules.api.phantomjs.PhantomJsRule;
 import org.apache.openejb.jee.WebApp;
 import org.apache.openejb.junit.ApplicationComposerRule;
 import org.apache.openejb.loader.IO;
@@ -12,6 +12,7 @@ import org.apache.openejb.testing.SimpleLog;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
 
 import javax.script.ScriptException;
 import javax.servlet.ServletException;
@@ -59,15 +60,16 @@ public class AngularJs1ClientGeneratorTest {
     @Test
     public void js() throws IOException, ScriptException, InterruptedException {
         final String home = httpEjbdPort.toExternalForm() + "openejb/home";
-        PHANTOM_JS.getDriver().get(home);
-        PHANTOM_JS.getDriver().executeAsyncScript( // wait for angular to have done its work
+        final PhantomJSDriver driver = PHANTOM_JS.getDriver();
+        driver.get(home);
+        driver.executeAsyncScript( // wait for angular to have done its work
                 "var callback = arguments[arguments.length - 1];" +
-                "var e1 = document.querySelector('body');" +
-                "if (window.angular) {" +
-                "angular.element(e1).injector().get('$browser').notifyWhenNoOutstandingRequests(callback);" +
-                "} else {callback()}"
+                        "var e1 = document.querySelector('body');" +
+                        "if (window.angular) {" +
+                        "angular.element(e1).injector().get('$browser').notifyWhenNoOutstandingRequests(callback);" +
+                        "} else {callback()}"
         );
-        final String pageSource = PHANTOM_JS.getDriver().getPageSource();
+        final String pageSource = driver.getPageSource();
         assertTrue(pageSource, pageSource.contains("\"base\":\"/openejb/api\""));
         assertTrue(pageSource, pageSource.contains("\"headers\":{\"Content-Type\":\"text/plain\"}"));
         assertTrue(pageSource, pageSource.contains("\"AResource\":"));

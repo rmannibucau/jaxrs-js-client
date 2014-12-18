@@ -1,6 +1,6 @@
 package com.github.rmannibuau.jaxrs.js.generator;
 
-import com.github.rmannibuau.jaxrs.js.generator.test.PhantomJsRule;
+import com.github.rmannibucau.rules.api.phantomjs.PhantomJsRule;
 import org.apache.openejb.jee.WebApp;
 import org.apache.openejb.junit.ApplicationComposerRule;
 import org.apache.openejb.loader.IO;
@@ -56,9 +56,7 @@ public class JQueryClientGeneratorTest {
 
     @Test
     public void js() throws IOException, ScriptException, InterruptedException {
-        final String home = httpEjbdPort.toExternalForm() + "openejb/home";
-        PHANTOM_JS.getDriver().get(home);
-        assertTrue(PHANTOM_JS.getDriver().getPageSource().contains("header1header2path 1path2query1query2matrix1matrix 2"));
+        assertTrue(PHANTOM_JS.get(httpEjbdPort.toExternalForm() + "openejb/home").contains("header1header2path 1path2query1query2matrix1matrix 2"));
     }
 
     @Test
